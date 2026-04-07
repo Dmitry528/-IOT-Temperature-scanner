@@ -5,6 +5,11 @@ import type { FastifyInstance } from "fastify";
 
 import environmentVariablesSchema from "@app/shared/utils/environment-variables.schema";
 
+
+import prismaPlugin from "@app/shared/prisma/prisma.client.plugin";
+
+import devicesRepositoryPlugin from "@app/iot/devices/plugins/devices.repository.plugin";
+
 import mqttPlugin from "@app/shared/mqtt/mqtt.plugin";
 import devicesMessageHandlerPlugin from "@app/iot/devices/plugins/devices.message.handler.plugin";
 import devicesServicePlugin from "@app/iot/devices/plugins/devices.service.plugin";
@@ -21,7 +26,15 @@ const start = async (): Promise<void> => {
       MQTT_PASSWORD,
       MQTT_PORT,
       MQTT_USERNAME,
+      DATABASE_URL,
     } = environmentVariablesSchema.parse(process.env);
+
+    // Creates db connection
+    await app.register(prismaPlugin, {
+      connectionString: DATABASE_URL,
+    });
+
+    await app.register(devicesRepositoryPlugin);
 
     await app.register(devicesServicePlugin);
     await app.register(devicesMessageHandlerPlugin);
@@ -33,7 +46,6 @@ const start = async (): Promise<void> => {
       password: MQTT_PASSWORD,
       username: MQTT_USERNAME,
     });
-
 
     // Start server
     await app.listen({ port: PORT, host: HOST });

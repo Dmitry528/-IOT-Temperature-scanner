@@ -6,7 +6,20 @@ services:
       - backend/.env
     ports:
       - "3000:8080"
+      - "5555:5555"
     restart: unless-stopped
+    depends_on:
+      - db
+      - mosquitto
+
+  db:
+    image: postgres:16
+    env_file:
+      - backend/.env
+    volumes:
+      - iotdbvolume:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
   
   mosquitto:
     image: eclipse-mosquitto:2
@@ -18,3 +31,6 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
+
+volumes:
+  iotdbvolume:

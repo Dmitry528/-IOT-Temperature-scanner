@@ -11,9 +11,10 @@ declare module 'fastify' {
 }
 
 const devicesServicePlugin: FastifyPluginAsync = async (app) => {
-  app.decorate('devicesService', new DevicesService(app.log));
+  app.decorate('devicesService', new DevicesService(app.log, app.devicesRepository));
 };
 
 export default fp(devicesServicePlugin, {
   name: 'devicesServicePlugin',
+  dependencies: ['devicesRepository']
 });

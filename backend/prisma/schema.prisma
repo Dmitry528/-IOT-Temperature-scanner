@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model TemperatureSensorData {
+  id String @id @default(uuid())
+  deviceId String
+  temperature String
+  sentAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@map("temperature-sensor-data")
+}

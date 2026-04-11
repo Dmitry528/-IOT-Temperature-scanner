@@ -7,13 +7,14 @@ datasource db {
   provider = "postgresql"
 }
 
-model TemperatureSensorData {
+model TemperatureReadings {
   id String @id @default(uuid())
   deviceId String
-  temperature String
+  temperature Float
   sentAt DateTime
 
   createdAt DateTime @default(now())
 
-  @@map("temperature-sensor-data")
+  @@index([deviceId])
+  @@map("temperature_readings")
 }

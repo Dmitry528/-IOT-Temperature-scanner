@@ -18,37 +18,43 @@ const mqttPlugin: FastifyPluginAsync<IMqttClientOptions> = async (app, opts) => 
   app.decorate('mqttClient', client);
 
   client.on("connect", async () => {
-    app.log.info("--- Successfully connected to MQTT ---");
+    app.log.info("MQTT: Successfully connected");
 
     try {
       await client.subscribeAsync(topicList);
 
-      app.log.info("MQTT subscriptions ready");
+      app.log.info("MQTT: subscriptions are ready");
     } catch (error) {
-      app.log.error({ error }, "Failed to subscribe to MQTT topics");
+      app.log.error({ error }, "MQTT: Failed to subscribe to topics");
     }
   });
 
   client.on("message", async (topic: string, payload: Buffer<ArrayBufferLike>) => {
     try {
       if (topic === Topics.Devices) {
-        await app.devicesMessageHandler.handleDevicesMessage(payload);
+        await app.deviceMessageHandler.handleDeviceMessage(payload);
       }
     } catch (error) {
-      app.log.error({ error, topic }, "MQTT: Unhandled MQTT message processing error");
+      app.log.error({ error, topic }, "MQTT: Unhandled message processing error");
     }
   });
 
   client.on("reconnect", () => {
-    app.log.warn("--- MQTT reconnecting ---");
+    app.log.info("MQTT: Reconnecting");
   });
 
   client.on("error", (error: Error | ErrorWithReasonCode) => {
-    app.log.error({ error }, "--- MQTT error ---");
+    app.log.error({ error }, "MQTT: Error");
+    throw error;
+  });
+
+  app.addHook('onClose', async () => {
+    await client.endAsync()
+    app.log.info('MQTT: client disconnected due to app shutdown');
   });
 };
 
 export default fp(mqttPlugin, {
   name: 'mqtt-plugin',
-  dependencies: ['devicesMessageHandlerPlugin'],
+  dependencies: ['deviceMessageHandlerPlugin'],
 });

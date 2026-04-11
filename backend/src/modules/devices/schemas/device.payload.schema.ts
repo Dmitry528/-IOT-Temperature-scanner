@@ -3,7 +3,7 @@ import * as z from "zod";
 export const deviceMessageSchema = z.object({
   deviceId: z.string(),
   data: z.object({
-    temperature: z.string(),
+    temperature: z.number(),
     sentAt: z.iso.datetime(),
   }),
 });

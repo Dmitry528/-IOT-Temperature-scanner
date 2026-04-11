@@ -5,20 +5,19 @@ import type { FastifyInstance } from "fastify";
 
 import environmentVariablesSchema from "@app/shared/utils/environment-variables.schema";
 
-
 import prismaPlugin from "@app/shared/prisma/prisma.client.plugin";
-
-import devicesRepositoryPlugin from "@app/iot/devices/plugins/devices.repository.plugin";
-
 import mqttPlugin from "@app/shared/mqtt/mqtt.plugin";
-import devicesMessageHandlerPlugin from "@app/iot/devices/plugins/devices.message.handler.plugin";
-import devicesServicePlugin from "@app/iot/devices/plugins/devices.service.plugin";
+
+import deviceRepositoryPlugin from "@app/modules/devices/plugins/device.repository.plugin";
+
+import deviceServicePlugin from "@app/modules/devices/plugins/device.service.plugin";
+
+import deviceMessageHandlerPlugin from "@app/modules/devices/plugins/device.message.handler.plugin";
 
 const app: FastifyInstance = fastify({ logger: true });
 
 const start = async (): Promise<void> => {
   try {
-    // Setup env vars
     const {
       HOST,
       PORT,
@@ -34,12 +33,11 @@ const start = async (): Promise<void> => {
       connectionString: DATABASE_URL,
     });
 
-    await app.register(devicesRepositoryPlugin);
+    await app.register(deviceRepositoryPlugin);
 
-    await app.register(devicesServicePlugin);
-    await app.register(devicesMessageHandlerPlugin);
+    await app.register(deviceServicePlugin);
+    await app.register(deviceMessageHandlerPlugin);
 
-    // Creates MQTT client, connects and subscribes to given topics
     await app.register(mqttPlugin, {
       host: MQTT_HOST,
       port: MQTT_PORT,
@@ -50,7 +48,7 @@ const start = async (): Promise<void> => {
     // Start server
     await app.listen({ port: PORT, host: HOST });
   } catch(error) {
-    app.log.error(error);
+    app.log.error({ error }, "Failed to start server");
     process.exit(1);
   }
 };

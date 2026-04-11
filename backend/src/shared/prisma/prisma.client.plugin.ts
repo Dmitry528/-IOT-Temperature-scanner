@@ -16,9 +16,9 @@ const prismaPlugin: FastifyPluginAsync<{ connectionString: string }> = async (ap
     await prisma.$connect();
     // Test query to ensure we have connection
     await prisma.$queryRaw`SELECT 1`;
-    app.log.info("Prisma was connected to database");
+    app.log.info("Prisma: Connected");
   } catch (error) {
-    app.log.info(error, "Prisma was not able to connect to database");
+    app.log.error({ error }, "Prisma: Was not able to connect");
     throw error;
   }
 
@@ -27,7 +27,7 @@ const prismaPlugin: FastifyPluginAsync<{ connectionString: string }> = async (ap
   app.addHook("onClose", async (app) => {
     //  runs when - await app.close();
     await app.prisma.$disconnect();
-    app.log.info("Prisma was disconnected");
+    app.log.info("Prisma: Was disconnected due to app shutdown");
   });
 };
 

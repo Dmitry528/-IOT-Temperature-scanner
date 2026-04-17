@@ -1,9 +1,8 @@
 import fp from "fastify-plugin";
 import type { FastifyPluginAsync } from 'fastify';
-import { ErrorWithReasonCode, MqttClient } from "mqtt";
+import { MqttClient, connectAsync } from "mqtt";
 
 import { IMqttClientOptions } from "@app/shared/mqtt/mqtt.types";
-import { createMqttClient } from "@app/shared/mqtt/mqtt.client";
 import { topicList, Topics } from "./mqtt.constants";
 
 declare module 'fastify' {
@@ -13,48 +12,37 @@ declare module 'fastify' {
 }
 
 const mqttPlugin: FastifyPluginAsync<IMqttClientOptions> = async (app, opts) => {
-  const client: MqttClient = createMqttClient(opts);
+  try {
+    const client: MqttClient = await connectAsync({
+      protocol: 'mqtt',
+      clientId: `backend-${process.pid}`,
+      clean: true,
+      reconnectPeriod: 3_000,
+      ...opts,
+    });
 
-  app.decorate('mqttClient', client);
+    if (!client.connected) {
+      throw new Error("MQTT client was created but was not able to connect");
+    }
 
-  client.on("connect", async () => {
     app.log.info("MQTT: Successfully connected");
+  
+    app.decorate('mqttClient', client);
 
-    try {
-      await client.subscribeAsync(topicList);
+    await client.subscribeAsync(topicList);
+    app.log.info("MQTT: Subscribed to given topics");
 
-      app.log.info("MQTT: subscriptions are ready");
-    } catch (error) {
-      app.log.error({ error }, "MQTT: Failed to subscribe to topics");
-    }
-  });
-
-  client.on("message", async (topic: string, payload: Buffer<ArrayBufferLike>) => {
-    try {
-      if (topic === Topics.Devices) {
-        await app.deviceMessageHandler.handleDeviceMessage(payload);
-      }
-    } catch (error) {
-      app.log.error({ error, topic }, "MQTT: Unhandled message processing error");
-    }
-  });
-
-  client.on("reconnect", () => {
-    app.log.info("MQTT: Reconnecting");
-  });
-
-  client.on("error", (error: Error | ErrorWithReasonCode) => {
-    app.log.error({ error }, "MQTT: Error");
-    throw error;
-  });
-
-  app.addHook('onClose', async () => {
-    await client.endAsync()
-    app.log.info('MQTT: client disconnected due to app shutdown');
-  });
+    app.addHook("onClose", async () => {
+      await client.endAsync();
+      app.log.info("MQTT: client was closed");
+    });
+  }
+  catch (error) {
+    app.log.error(error, "MQTT: Failed to establish connection");
+    throw new Error("MQTT: Failed to establish connection", { cause: error });
+  }
 };
 
 export default fp(mqttPlugin, {
-  name: 'mqtt-plugin',
-  dependencies: ['deviceMessageHandlerPlugin'],
+  name: 'mqttPlugin',
 });

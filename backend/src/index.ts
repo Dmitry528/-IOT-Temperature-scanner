@@ -7,6 +7,7 @@ import environmentVariablesSchema from "@app/shared/utils/environment-variables.
 
 import prismaPlugin from "@app/shared/prisma/prisma.client.plugin";
 import mqttPlugin from "@app/shared/mqtt/mqtt.plugin";
+import mqttEventBusPlugin from "@app/shared/mqtt/mqtt.event-bus.plugin";
 
 import deviceRepositoryPlugin from "@app/modules/devices/plugins/device.repository.plugin";
 
@@ -33,17 +34,20 @@ const start = async (): Promise<void> => {
       connectionString: DATABASE_URL,
     });
 
-    await app.register(deviceRepositoryPlugin);
-
-    await app.register(deviceServicePlugin);
-    await app.register(deviceMessageHandlerPlugin);
-
     await app.register(mqttPlugin, {
       host: MQTT_HOST,
       port: MQTT_PORT,
       password: MQTT_PASSWORD,
       username: MQTT_USERNAME,
     });
+
+    await app.register(mqttEventBusPlugin);
+    
+    await app.register(deviceRepositoryPlugin);
+
+    await app.register(deviceServicePlugin);
+
+    await app.register(deviceMessageHandlerPlugin);
 
     // Start server
     await app.listen({ port: PORT, host: HOST });

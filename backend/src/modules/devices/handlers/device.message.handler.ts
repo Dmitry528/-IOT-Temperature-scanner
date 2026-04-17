@@ -1,15 +1,21 @@
 import { FastifyBaseLogger } from "fastify";
 import { deviceMessageSchema } from "@app/modules/devices/schemas/device.payload.schema";
 import { DeviceService } from "@app/modules/devices/services/device.service";
+import { MqttRawMessage } from "@app/shared/mqtt/mqtt.types";
+import { Topics } from "@app/shared/mqtt/mqtt.constants";
 
 export class DeviceMessageHandler {
   constructor(
     private logger: FastifyBaseLogger,
-    private deviceService: DeviceService
+    private deviceService: DeviceService,
   ) {}
 
-  async handleDeviceMessage(payload: Buffer<ArrayBufferLike>) {
+  async handle({ topic, payload }: MqttRawMessage) {
     try {
+      if (topic !== Topics.Devices) {
+        return;
+      }
+
       const parsedPayload = JSON.parse(payload.toString());
 
       const { success, data, error } = deviceMessageSchema.safeParse(parsedPayload);

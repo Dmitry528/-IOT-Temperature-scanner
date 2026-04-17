@@ -4,3 +4,8 @@ export interface IMqttClientOptions {
   username: string;
   password: string;
 };
+
+export type MqttRawMessage = {
+  topic: string;
+  payload: Buffer<ArrayBufferLike>;
+};

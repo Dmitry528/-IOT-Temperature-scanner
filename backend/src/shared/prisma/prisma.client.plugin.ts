@@ -19,15 +19,14 @@ const prismaPlugin: FastifyPluginAsync<{ connectionString: string }> = async (ap
     app.log.info("Prisma: Connected");
   } catch (error) {
     app.log.error({ error }, "Prisma: Was not able to connect");
-    throw error;
+    throw new Error("Prisma: Was not able to connect", { cause: error });
   }
 
   app.decorate("prisma", prisma);
 
   app.addHook("onClose", async (app) => {
-    //  runs when - await app.close();
     await app.prisma.$disconnect();
-    app.log.info("Prisma: Was disconnected due to app shutdown");
+    app.log.info("Prisma: Client was closed");
   });
 };
 

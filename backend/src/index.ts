@@ -58,3 +58,20 @@ const start = async (): Promise<void> => {
 };
 
 start();
+
+
+const onCloseCleanup = async (signal: string) => {
+  try {
+    app.log.info(`${signal} received, closing app...`);
+    // Runs onClose hooks and disconnects prisma and mosquitto
+    await app.close();
+    app.log.info("App: server is closed");
+    process.exit(0);
+  } catch (error) {
+    app.log.error(error, "Error during shutdown");
+    process.exit(1);
+  }
+};
+
+process.on("SIGINT", () => void onCloseCleanup("SIGINT"));
+process.on("SIGTERM", () => void onCloseCleanup("SIGTERM"));

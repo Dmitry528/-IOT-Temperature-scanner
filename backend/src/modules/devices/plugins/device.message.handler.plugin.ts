@@ -5,12 +5,12 @@ import { DeviceMessageHandler } from "@app/modules/devices/handlers/device.messa
 import { MqttRawMessage } from "@app/shared/mqtt/mqtt.types";
 
 const deviceMessageHandlerPlugin: FastifyPluginAsync = async (app) => {
-  app.subscribeToMqttMessages(async (msg: MqttRawMessage) => {
-    const deviceMessageHandler: DeviceMessageHandler = new DeviceMessageHandler(
-      app.log,
-      app.deviceService,
-    );
+  const deviceMessageHandler: DeviceMessageHandler = new DeviceMessageHandler(
+    app.log,
+    app.deviceService,
+  );
 
+  app.subscribeToMqttMessages(async (msg: MqttRawMessage) => {
     await deviceMessageHandler.handle(msg);
   });
 };
